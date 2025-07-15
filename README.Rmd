@@ -1,0 +1,76 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# J-ctox-db
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+Analysis asked by J Fu, 7-14-25:
+
+
+1.	DPS Review (PDF)
+o	Contains the new ingredient list
+2.	"New list EX-clean version" (Excel)
+o	Table extracted from the DPS review for easier reference
+3.	Master List (Excel)
+o	EX bundles that have completed CompTox evaluation and literature search
+Requested Analysis: Could you please compare these lists to identify how many ingredients from the new list are not included in the master list? This comparison will help us determine which ingredients require further evaluation.
+
+
+
+Project uses `{targets}`and `{renv}` and `{here}`. 
+
+`data\raw` : raw data given by JF. `New List Ex-clean version.xlsx` cis the new `Master list_waterpipe chemical database (for the EX program and waterpipe fillers only)_2025.xlsx` is the one that they created.
+
+`data\other`: cleaned up version of the files.
+
+`code\` : functions called by `_targets.R` in `here::here("code", "targets_functions"))`
+
+`reports\`: output files
+
+
+Fixed CASRN in masterfile due to value type:
+
+
+
+Vanilleextrakt ?????
+
+
+Separated CASRN with multiple CASRN or Unknown.
+
+Some had 2 CASRN in a single cell.
+2 Unknown removed
+? removed
+empty removed
+
+
+
+
+# Howto
+
+Initialize and install packages with:
+
+```
+renv::restore()
+```
+
+Run the pipeline.
+
+```
+targets::tar_make()
+```
+
+Check manifest with `targets::tar_manifest()` and Load targets with `targets::tar_load("name_of_target)`
+
+
