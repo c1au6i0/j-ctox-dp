@@ -9,9 +9,9 @@ extr_inf <- function(dat) {
   dat |>
     summarize(
       dataset_name = dplyr::first(dataset_name),
+      nrows = length(casrn),
       unique_casrn = length(unique(casrn)),
       unique_names = length(unique(iupac_name)),
-      nrows = length(casrn),
       duplicated_casrn = sum(duplicated(dat$casrn)),
       duplicated_iupac_names = sum(duplicated(dat$iupac_name))
     )
