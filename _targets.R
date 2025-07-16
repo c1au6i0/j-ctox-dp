@@ -87,15 +87,24 @@ list(
     main_cid |>
       dplyr::filter(!query %in% to_remove_main) |>
       dplyr::bind_rows(to_add_main) |>
+      dplyr::distinct(cid) |> 
       dplyr::pull(cid) |>
-      webchem::pc_prop(verbose = TRUE)
+      webchem::pc_prop(verbose = TRUE) |> 
+      dplyr::relocate(IUPACName, 1) 
       ),
+  tar_target(
+    main_chem_all,
+    main_cid |> 
+      dplyr::rename(CASRN = query, CID = cid) |>
+      dplyr::mutate(CID = as.integer(CID)) |> 
+      dplyr::right_join(main_chem, by ="CID") |> 
+      dplyr::relocate(CASRN:CID, .after = IUPACName)
+  ),
   tar_file(
     main_chem_out,
     {
       path_out <- here::here("reports", "tabs_figs", "main_wp_clean.xlsx")
-      main_chem |> 
-        dplyr::relocate(IUPACName, 1) |> 
+      main_chem_all |> 
         write.xlsx(path_out)
       path_out
       
@@ -110,10 +119,65 @@ list(
       filter(!is.na(casrn)) |> 
       mutate(casrn = str_trim(casrn)) |> 
       dplyr::distinct(casrn) |> 
+      tidyr::drop_na(casrn) |> 
       pull(casrn) |> 
       webchem::get_cid(match = "first",
                        verbose = TRUE)
+  ),
+  tar_target(
+    to_add_ex,
+    tibble::tribble(
+      ~query, ~cid,
+      "27043-05-6", "26334",
+      "8002-66-2", "5280443",
+      "68917-18-0", "167312527"
+    )
+  ),
+  tar_target(
+    ex_cid_chem,
+    ex_cid |> 
+      dplyr::bind_rows(to_add_ex) |>
+      dplyr::distinct(cid) |> 
+      tidyr::drop_na(cid) |>
+      pull(cid) |> 
+      webchem::pc_prop(verbose = TRUE) |> 
+      dplyr::relocate(IUPACName, 1) 
+  ),
+  tar_target(
+    ex_cid_chem_all,
+    ex_cid |> 
+      dplyr::rename(CASRN = query, CID = cid) |>
+      dplyr::mutate(CID = as.integer(CID)) |> 
+      dplyr::right_join(ex_cid_chem, by ="CID") |> 
+      dplyr::relocate(CASRN:CID, .after = IUPACName)
+  ),
+  tar_file(
+    ex_cid_chem_out,
+    {
+      path_out <- here::here("reports", "tabs_figs", "ex_cid_chem.xlsx")
+      main_chem |> 
+        write.xlsx(path_out)
+      path_out
+      
+    }
+  ),
+  # @@@@@@@@@@@@@@@@@@
+  # Solution ----@@@@@
+  # @@@@@@@@@@@@@@@@@@
+  tar_target(
+    solution,
+    ex_cid_chem_all |> 
+      dplyr::filter(!SMILES %in% main_chem_all$SMILES)
+  ),
+  tar_file(
+    solution_out,
+    {
+      path_out <- here::here("reports", "tabs_figs", "inner_to_check.xlsx")
+      solution |> 
+        write.xlsx(path_out)
+      path_out
+      
+    }
   )
   
- 
 )
