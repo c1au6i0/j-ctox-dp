@@ -98,7 +98,8 @@ list(
       dplyr::rename(CASRN = query, CID = cid) |>
       dplyr::mutate(CID = as.integer(CID)) |> 
       dplyr::right_join(main_chem, by ="CID") |> 
-      dplyr::relocate(CASRN:CID, .after = IUPACName)
+      dplyr::relocate(CASRN:CID, .after = IUPACName) |> 
+      dplyr::distinct(CID, .keep_all = TRUE)
   ),
   tar_file(
     main_chem_out,
@@ -149,13 +150,14 @@ list(
       dplyr::rename(CASRN = query, CID = cid) |>
       dplyr::mutate(CID = as.integer(CID)) |> 
       dplyr::right_join(ex_cid_chem, by ="CID") |> 
-      dplyr::relocate(CASRN:CID, .after = IUPACName)
+      dplyr::relocate(CASRN:CID, .after = IUPACName) |> 
+      dplyr::distinct(CID, .keep_all = TRUE)
   ),
   tar_file(
     ex_cid_chem_out,
     {
       path_out <- here::here("reports", "tabs_figs", "ex_cid_chem.xlsx")
-      main_chem |> 
+      ex_cid_chem_all |> 
         write.xlsx(path_out)
       path_out
       

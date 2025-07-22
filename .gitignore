@@ -6,6 +6,7 @@
 .DS_Store
 ._.DS_Store
 ._.*
-data/*
-reports/*
+data/
+reports/*.html
+reports/tabs_figs/*
 

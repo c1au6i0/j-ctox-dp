@@ -1,0 +1,329 @@
+---
+title: "j-ctox-dp"
+author: "Claudio Zanettini"
+editor: source
+date: '`r Sys.Date()`'
+format:
+  html:
+    self_contained: true
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+    page-layout: full
+---
+
+```{r echo=FALSE}
+# https://gist.github.com/debruine/01b4ce274733a4a99622365e8c6df701
+# custom knit_print functions for data.frame
+library(knitr)
+# print everything as paged ----
+# knit_print.data.frame <- function (x, options, ...) {
+#   rmarkdown::paged_table(x, options) |>
+#     rmarkdown:::print.paged_df()
+# }
+# registerS3method("knit_print", "data.frame", knit_print.data.frame)
+# print everything as kable ----
+# knit_print.data.frame <- function (x, options, ...) {
+#   knitr::kable(x) |> knitr::knit_print(options, ...)
+# }
+# registerS3method("knit_print", "data.frame", knit_print.data.frame)
+# super-customised table printing ----
+`%||%` <- function(l, r) {
+  if (is.null(l)) r else l
+}
+knit_print.data.frame <- function(x, options, ...) {
+  # get options
+  digits <- options$digits %||% getOption("digits")
+  rownames <- options$rownames %||% FALSE
+  pageLength <- options$pageLength %||% 10
+  escape <- options$escape %||% TRUE
+  caption <- options$fig.cap
+
+  # remove caption so it doesn't print twice (NOT WORKING)
+  options$fig.cap <- NULL
+
+  # use DT for longer tables in html
+  if (nrow(x) > pageLength & knitr::is_html_output()) {
+    numeric_cols <- sapply(x, is.numeric) |>
+      which() |>
+      names()
+    dt <- DT::datatable(x,
+      rownames = rownames,
+      caption = caption,
+      escape = escape,
+      width = "100%",
+      height = "auto",
+      options = list(pageLength = 5),
+      selection = "none",
+      filter = "top"
+    )
+    if (length(numeric_cols) > 0) {
+      dt <- DT::formatRound(dt,
+        columns = numeric_cols,
+        digits = digits,
+      )
+    }
+    knitr::knit_print(dt, options)
+  } else {
+    # use kableExtra::kable for PDFs or shorter tables
+    k <- kableExtra::kable(x,
+      digits = digits,
+      row.names = rownames,
+      caption = caption,
+      escape = escape
+    ) |>
+      kableExtra::kable_styling(
+        full_width = options$full_width,
+        bootstrap_options = c("striped", "hover")
+      )
+
+    if (knitr::is_html_output()) {
+      k <- c("<div class=\"kable-table\">", k, "</div>") |>
+        paste(collapse = "\n")
+    }
+
+    knitr::asis_output(k)
+  }
+}
+registerS3method("knit_print", "data.frame", knit_print.data.frame)
+```
+
+```{=html}
+<style>
+.output {
+  border: 1px solid #dcdcdc;
+  background-color: #e6f2ff;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+</style>
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+targets::tar_load_globals(script = here::here("_targets.R"))
+theme_set(theme_bw())
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+tar_config_set(store = here("_targets"))
+```
+
+## Background
+
+We have two lists of chemicals: the Main list and the Ex New list. 
+Our goal is to determine how many chemicals from the Ex New list are also present in the Main list.
+
+![](tabs_figs/matrioska.jpg){fig-align="center"}
+
+Comparing CASRN between lists sounds easy, but the same chemical can show up with different CASRN
+so if we just look at CASRN, we might miss some duplicates. It's better to use something like SMILES or the first part of the InChIKey
+to spot unique chemicals (as discussed with Jiaqi and Dilip). If we pull those out for both lists, we can do a much better job matching things up.
+
+![](tabs_figs/casrn.png){width="600"}
+
+First, let's make sure there aren't any duplicate CASRN in our list. 
+Once that's sorted, we'll use those CASRN to pull chemical info from some online database.
+
+So the plan is:
+Here's the game plan:
+
+1. First, let's check for any duplicate CASRN in each list.
+2. Next, we'll use those unique CASRN to grab PubChem Compound IDs (CIDs)—these are like PubChem's own unique tags for chemicals.
+3. Sometimes, different CASRN actually point to the same chemical (same CID). We'll check those out.
+4. Once we've got the CIDs, we'll pull all the chemical info we can from PubChem.
+5. Finally, we'll use SMILES strings to see if any chemicals from the Ex list are missing in the Main list.
+
+Let's get started!
+
+## Import data and explore
+
+```{r}
+tar_load(main_dat_wp)
+tar_load(ex_data)
+```
+
+## Exploration Datasets
+
+Let's start by checking for duplicate CASRN and names in each dataset. For names, we're matching exact strings (case sensitive). 
+While it's normal to see lots of duplicates in the applicant tables, the Clean Main List (`main_dat_wp`) should have few or none.
+
+```{r}
+dat_list <- list(main_dat_wp, ex_data)
+names(dat_list) <- c("main_dat_wp", "ex_data")
+
+dat_list <- imap(dat_list,  \(x, idx) {
+            x[, "dataset_name"] <- idx
+            x
+            }
+     )
+
+list_rbind(purrr::map(dat_list, extr_inf))
+```
+
+There are some repetitions in the Clean Main List: 28 duplicated CASRN (about 10%) and 3 duplicated Names.
+
+Let's identify the duplications.
+
+Starting with CASRN duplicates, here are all CASRN that appear more than once:
+
+```{r}
+
+duplicated_casrn <- main_dat_wp$casrn[duplicated(main_dat_wp$casrn)]
+
+
+main_dat_wp |> 
+  filter(casrn %in% duplicated_casrn) |> 
+  arrange(casrn)
+
+```
+
+
+
+## Main Dataset
+
+### Retrieve Chemical Information from PubChem
+
+We will attempt to obtain PubChem CIDs using CASRN.
+
+```{r eval=FALSE}
+main_cid <-     main_dat_wp |> 
+      filter(!is.na(casrn)) |> 
+      dplyr::distinct(casrn) |> 
+      pull(casrn) |> 
+      webchem::get_cid(match = "first",
+                     verbose = TRUE)
+```
+
+Looks like we couldn't retrieve info for 7 CASRN. We'll need to check those by hand.
+
+```{r}
+tar_load(main_cid)
+main_cid |> 
+  dplyr::filter(is.na(cid))
+
+```
+
+Here's the list of CASRN that didn't turn up anything: 96680-15-8, 5115-67-4
+
+CASRN 8007-00-9 is actually a complex ingredient, not a single chemical.
+
+```{r}
+tibble::tribble(
+  ~query, ~cid,
+  "8028-89-5", "61634",
+  "8002-66-2", "5280443",
+  "8000-41-7", "17100"
+)
+```
+
+So, we've got 220 CASRN (that's 223 minus 3 we couldn't retrieve).
+
+But here's the catch: those 220 CASRN map to just 214 unique CIDs. So, 4 CASRN actually point to the same chemical.
+
+```{r}
+length(unique(main_cid$cid))
+```
+
+Now we can actually pull chemical info from PubChem using those CIDs.
+
+```{r eval=FALSE}
+main_cid |> 
+      dplyr::filter(!casrn %in% to_remove_main) |> 
+      dplyr::bind_rows(to_add_main |> 
+      distinct(cid) |> 
+      pull(cid) |> 
+      webchem::pc_prop(verbose = TRUE)
+```
+
+Booom, here we are.
+
+```{r}
+tar_load(main_chem)
+```
+
+```{r eval=FALSE}
+main_chem_all <- main_cid |> 
+  dplyr::rename(CASRN = query, CID = cid) |>
+  dplyr::mutate(CID = as.integer(CID)) |> 
+  dplyr::right_join(main_chem, by ="CID") |> 
+  dplyr::relocate(CASRN:CID, .after = IUPACName)
+```
+
+```{r}
+tar_load(main_chem_all)
+main_chem_all
+```
+
+## Ex Dataset
+
+Let's poke around the Ex dataset a bit and see what we have.
+
+```{r}
+ex_data |> 
+  group_by(table) |> 
+  summarize(ingredients_per_table = n())
+```
+
+```{r eval = FALSE}
+    
+ex_cid <- ex_data |> 
+      filter(!is.na(casrn)) |> 
+      mutate(casrn = str_trim(casrn)) |> 
+      dplyr::distinct(casrn) |> 
+      pull(casrn) |> 
+      webchem::get_cid(match = "first",
+                       verbose = TRUE)
+```
+
+So, we've got 162 unique CASRN in the Ex dataset.
+
+Out of those, 24 couldn't be retrieved. I checked them one by one turns out 2 weren't actually CASRN, and 3 did have a CID after all.
+The rest were either complex ingredients or just not found.
+
+```{r}
+tar_load(ex_cid)
+not_found_cid
+```
+
+I checked them one by one turns out 2 weren't actually CASRN, and 3 did have a CID after all.
+**The rest were either complex ingredients or just not found.**
+
+```{r}
+not_found_cid
+# sum(duplicated(ex_cid$cid))
+```
+
+Looks like we've got some duplicated CIDs in the Ex dataset too.
+
+```{r}
+sum(duplicated(ex_cid$cid))
+```
+
+Now let's grab the chemical info for the Ex dataset.
+
+```{r eval=FALSE}
+ex_cid |> 
+  dplyr::bind_rows(to_add_ex) |>
+  dplyr::distinct(cid) |> 
+  tidyr::drop_na(cid) |>
+  pull(cid) |> 
+  tidyr::drop_na(cid) |>
+  webchem::get_cid(match = "first",
+                       verbose = TRUE)
+```
+
+```{r}
+tar_load(ex_cid_chem_all)
+ex_cid_chem_all
+```
+## Matrioska
+
+Alright, let's peek inside the matrioska and see which chemicals from the Ex list are not in to the Main list.
+
+
+```{r}
+ex_cid_chem_all |> 
+  dplyr::filter(!SMILES %in% main_chem_all$SMILES)
+
+```
