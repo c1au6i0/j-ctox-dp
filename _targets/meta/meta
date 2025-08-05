@@ -4,19 +4,11 @@ to_add_main|stem|6003eb6d667725d8|960b37cf0073a06a|2c530c1562a7fbd1|-473215059||
 ex_data|stem|727a6cca59f66a71|0620b7e5d91da2ca|ee0a7dd2f24688ac|-2145678600||t20284.8639668764s|s3826b|3826|rds|local|vector|||0.11||
 to_add_ex|stem|74880b1e3745bf3a|550e9c9cc0635cbe|2c530c1562a7fbd1|1456384220||t20284.9614818634s|s197b|197|rds|local|vector|||0.8||
 ex_cid|stem|00c500552f1dd37a|00598786c1a1c358|21c83a32129e3614|1565993294||t20284.9695423292s|s1580b|1580|rds|local|vector|||49.7||
-ex_cid_chem|stem|ec362ae2dec89d4b|cf0778084f9ec74e|f582528e6a314f49|1530001651||t20285.0190268154s|s17711b|17711|rds|local|vector|||2.76||
-ex_cid_chem_all|stem|8109236f50fdb36d|2eb1bfc100f50073|4f2cdc481254a950|528923590||t20291.8443282451s|s9888b|9888|rds|local|vector|||0.01||
-ex_cid_chem_out|stem|c7c4ddccc5fcdb0c|23b9b17a2b1cc68d|0e19e150b2d4fb54|349642499|C:/Users/Claudio.Zanettini/OneDrive - FDA/Documents/r_projects/j-ctox-dp/reports/tabs_figs/ex_cid_chem.xlsx|t20291.8443305033s|s20786b|20786|file|local|vector|||0.09||
 main_dat_wp_file|stem|c7923790f71e4b1e|36151975544eff8e|2c530c1562a7fbd1|-2146140933|C:/Users/Claudio.Zanettini/OneDrive - FDA/Documents/r_projects/j-ctox-dp/data/other/main_list_wp.xlsx|t20299.7026603419s|s19711b|19711|file|local|vector|||1.09||
 main_dat_wp|stem|98d4591a5c373320|9da1af919d202c31|3ef3489c8635830c|-1304683943||t20299.703154354s|s4043b|4043|rds|local|vector|||0.3||
 main_comptox|stem|73b5bcf2b609b50b|249c7b673fb01f91|6e5c68eb334d93ec|-1675156036||t20299.7032303126s|s18516b|18516|rds|local|vector|||6.39|Chemicals 87745311, 13368655, and 5115674 not found|
 main_cid|stem|6b47f2ecfde6d0c3|a4f015a5330da3f4|6e5c68eb334d93ec|-1799761337||t20299.7040671253s|s2157b|2157|rds|local|vector|||72.19||
 to_remove_main|stem|c395d2433e84fb2f|ee36ec8febc7a18a|27ef8b2590d388cb|314727775||t20299.7040682762s|s104b|104|rds|local|vector|||0||
-main_chem|stem|036f2510ddfaf391|53ce001dde05eacc|cc1d2d4da4794310|809275976||t20299.7041077121s|s25571b|25571|rds|local|vector|||3.28||
-main_chem_all|stem|cf09e014894a3dfa|5513cd004c9675ea|501c9f945a729375|1938655533||t20299.704109271s|s26873b|26873|rds|local|vector|||0.03||
-solution|stem|8ac1888d4e9a6df3|66b91cbfbcfd1ec1|c95220f05a75a4b4|-600939007||t20299.7041107318s|s3040b|3040|rds|local|vector|||0||
-main_chem_out|stem|329bfb86c2604a3e|11c219c515747451|e41ac452f0f61395|2054617520|C:/Users/Claudio.Zanettini/OneDrive - FDA/Documents/r_projects/j-ctox-dp/reports/tabs_figs/main_wp_clean.xlsx|t20299.7041130986s|s63019b|63019|file|local|vector|||0.09||
-solution_out|stem|d4e725967b417dd5|73a0a84d56934eec|689e714195828516|-966747289|C:/Users/Claudio.Zanettini/OneDrive - FDA/Documents/r_projects/j-ctox-dp/reports/tabs_figs/outer_to_check.xlsx|t20299.7041151525s|s10434b|10434|file|local|vector|||0.06||
 orange|stem|7da0b8534a3c1789|6d4f8223732230bb|c1f3dad221eb856a|86502843||t20300.0996568138s|s721b|721|rds|local|vector|||0.07||
 orange_cid|stem|45a351c83c636a7f|b6b55ace73ead6ef|b49688ab06047789|-2129304982||t20300.103635889s|s422b|422|rds|local|vector|||7.9||
 to_add_orange|stem|2d09b3cdf5c3ce29|6fc05d52c0d17ef2|2c530c1562a7fbd1|-799410797||t20300.1081122949s|s159b|159|rds|local|vector|||0.72||
@@ -29,8 +21,18 @@ dup|object|e435a6b9e7e6ea9f|||||||||||||||
 dat_list|object|eddebe3bac78d5ad|||||||||||||||
 duplicated_casrn_cid|object|59deefe3fbc2bcb5|||||||||||||||
 duplicated_casrn|object|13838c1033274c23|||||||||||||||
-main_cid_cl|object|df8ab4626c5a8f91|||||||||||||||
 orange_chem_all|stem|94529931db3b2748|0ab318f9fd86b6fc|9cc7ecd1db5b7d47|-1831397249||t20300.1549509107s|s2035b|2035|rds|local|vector|||0.02||
+main_cid_cl|stem|eebfe4ceaf3ee7be|9ceae47c85ee5521|cc1d2d4da4794310|-2042952069||t20300.6938538875s|s2137b|2137|rds|local|vector|||0||
+main_chem|stem|036f2510ddfaf391|083158ed265de801|d19f6900db965064|809275976||t20300.6939076925s|s25571b|25571|rds|local|vector|||4.47||
+main_chem_all|stem|3298767ec78d17ad|01cf7ab524d9f154|a8f234df7ef0738e|1938655533||t20300.7034912055s|s26879b|26879|rds|local|vector|||0.01||
+main_chem_out|stem|9fa0d0fa60bd8a8d|11c219c515747451|c9a2ffe04e1c2dfb|2054617520|C:/Users/Claudio.Zanettini/OneDrive - FDA/Documents/r_projects/j-ctox-dp/reports/tabs_figs/main_wp_clean.xlsx|t20300.7034949861s|s63028b|63028|file|local|vector|||0.17||
+ex_cid_cl|stem|c6ee7e6cd40f3262|a2e4219f9d8b59a5|f582528e6a314f49|851845350||t20300.7074208773s|s1426b|1426|rds|local|vector|||0.02||
+ex_cid_chem|stem|ec362ae2dec89d4b|c2f8e79de7abab6c|68699c68c6fde5e9|1530001651||t20300.7074678746s|s17711b|17711|rds|local|vector|||3.89||
+ex_cid_chem_all|stem|25a376fff6b9fa76|18b362f60b5891d5|283d245ac34efe91|528923590||t20304.7203870727s|s10403b|10403|rds|local|vector|||0.03||
+ex_cid_chem_out|stem|27b37031883f2a8a|23b9b17a2b1cc68d|40585cba5e1aae8f|349642499|C:/Users/Claudio.Zanettini/OneDrive - FDA/Documents/r_projects/j-ctox-dp/reports/tabs_figs/ex_cid_chem.xlsx|t20304.7203965766s|s21840b|21840|file|local|vector|||0.3||
+solution|stem|9de9f6f25366002d|66b91cbfbcfd1ec1|43c3f3d86aa78345|-600939007||t20304.7204000497s|s3212b|3212|rds|local|vector|||0||
+solution_out|stem|8c8851b02d050531|73a0a84d56934eec|289d2e98636bee8d|-966747289|C:/Users/Claudio.Zanettini/OneDrive - FDA/Documents/r_projects/j-ctox-dp/reports/tabs_figs/outer_to_check.xlsx|t20304.7204045622s|s10755b|10755|file|local|vector|||0.21||
 extr_inf|function|1e4079e47a9ada79
 not_found_cid|object|d0e901c621d17415
-orange_plus|stem|875a6119e320f13c|22d7283ade52d919|72bd55b874e50f3f|-235725199||t20300.17303385s|s4027b|4027|rds|local|vector|||0||
+orange_plus|stem|6e4f1429cb4bfd29|f85dfaeadda051f8|db029ee9fd934799|-235725199||t20305.6279647053s|s4152b|4152|rds|local|vector|||0||
+orange_plus_out|stem|5e149e07c60a54bb|9388ac3dadec6748|dc83f43721252905|1035349967|C:/Users/Claudio.Zanettini/OneDrive - FDA/Documents/r_projects/j-ctox-dp/reports/tabs_figs/orange_plus.xlsx|t20305.6279668236s|s12038b|12038|file|local|vector|||0.06||

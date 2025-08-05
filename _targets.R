@@ -83,10 +83,16 @@ list(
       pull(query)
   ),
   tar_target(
+    main_cid_cl,
+    main_cid |> 
+      dplyr::filter(!query %in% to_remove_main) |> 
+      dplyr::bind_rows(to_add_main) 
+
+  ),
+  
+  tar_target(
     main_chem,
-    main_cid |>
-      dplyr::filter(!query %in% to_remove_main) |>
-      dplyr::bind_rows(to_add_main) |>
+    main_cid_cl |>
       dplyr::distinct(cid) |> 
       dplyr::pull(cid) |>
       webchem::pc_prop(verbose = TRUE) |> 
@@ -94,7 +100,7 @@ list(
       ),
   tar_target(
     main_chem_all,
-    main_cid |> 
+    main_cid_cl |> 
       dplyr::rename(CASRN = query, CID = cid) |>
       dplyr::mutate(CID = as.integer(CID)) |> 
       dplyr::right_join(main_chem, by ="CID") |> 
@@ -135,9 +141,14 @@ list(
     )
   ),
   tar_target(
-    ex_cid_chem,
+    ex_cid_cl,
     ex_cid |> 
-      dplyr::bind_rows(to_add_ex) |>
+      dplyr::filter(!is.na(cid)) |> 
+      dplyr::bind_rows(to_add_ex) 
+  ),
+  tar_target(
+    ex_cid_chem,
+    ex_cid_cl |> 
       dplyr::distinct(cid) |> 
       tidyr::drop_na(cid) |>
       pull(cid) |> 
@@ -146,14 +157,13 @@ list(
   ),
   tar_target(
     ex_cid_chem_all,
-    ex_cid |> 
+    ex_cid_cl |> 
       dplyr::rename(CASRN = query, CID = cid) |>
       dplyr::mutate(CID = as.integer(CID)) |> 
       dplyr::right_join(ex_cid_chem, by ="CID") |> 
       dplyr::relocate(CASRN:CID, .after = IUPACName) |> 
       dplyr::distinct(CID, .keep_all = TRUE) |> 
-      dplyr::select(IUPACName:InChIKey) |> 
-      dplyr::select(-MolecularWeight)
+      dplyr::select(IUPACName:InChIKey) 
   ),
   tar_file(
     ex_cid_chem_out,
@@ -241,8 +251,18 @@ list(
     orange_plus,
     orange_chem_all |> 
       bind_rows(solution)  |> 
-      distinct(CID, .keep_all = TRUE)  
+      distinct(CID, .keep_all = TRUE) |> 
+      mutate(MolecularWeight = as.numeric(MolecularWeight))
     
+  ),
+  tar_file(
+    orange_plus_out,
+    {
+      path_out <- here::here("reports", "tabs_figs", "orange_plus.xlsx")
+      orange_plus |> 
+        write.xlsx(path_out)
+      path_out
+      
+    }
   )
-
 )

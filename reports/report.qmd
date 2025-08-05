@@ -223,19 +223,24 @@ Let's double check.
 ```{r}
 tar_load(to_remove_main) # -6
 tar_load(to_add_main) # +3
+tar_load(main_cid)
 
-main_cid_cl <- main_cid |>
-      dplyr::filter(!query %in% to_remove_main) |>
-      dplyr::bind_rows(to_add_main)
+main_cid |> 
+  dplyr::filter(!query %in% to_remove_main) |> 
+  dplyr::bind_rows(to_add_main) |> 
+  nrow()
+```
 
-nrow(main_cid_cl)
+```{r}
+tar_load(main_cid_cl)
+main_cid_cl
 ```
 
 
-But here's the catch: those 220 CASRN map to just 215 unique CIDs.
+But here's the catch: those 220 CASRN map to just 214 unique CIDs.
 
 ```{r}
-length(unique(main_cid_cl$cid))
+length(unique(main_cid$cid))
 ```
 Let's check the duplicated CID.
 
@@ -248,15 +253,6 @@ main_cid_cl |>
 
 
 Now we can actually pull chemical info from PubChem using those CIDs.
-
-```{r eval=FALSE}
-main_cid |> 
-      dplyr::filter(!casrn %in% to_remove_main) |> 
-      dplyr::bind_rows(to_add_main |> 
-      distinct(cid) |> 
-      pull(cid) |> 
-      webchem::pc_prop(verbose = TRUE)
-```
 
 Booom, here we are.
 
@@ -274,65 +270,59 @@ main_chem_all <- main_cid |>
 
 ```{r}
 tar_load(main_chem_all)
-main_chem_all
+View(main_chem_all)
 ```
+
 
 ## Ex Dataset
 
 Let's poke around the Ex dataset a bit and see what we have.
 
 ```{r}
+tar_load(ex_data)
 ex_data |> 
   group_by(table) |> 
   summarize(ingredients_per_table = n())
 ```
-
-```{r eval = FALSE}
-    
-ex_cid <- ex_data |> 
-      filter(!is.na(casrn)) |> 
-      mutate(casrn = str_trim(casrn)) |> 
-      dplyr::distinct(casrn) |> 
-      pull(casrn) |> 
-      webchem::get_cid(match = "first",
-                       verbose = TRUE)
-```
-
-So, we've got 162 unique CASRN in the Ex dataset.
-
-Out of those, 24 couldn't be retrieved. I checked them one by one turns out 2 weren't actually CASRN, and 3 did have a CID after all.
-The rest were either complex ingredients or just not found.
+Let's see again the first table.
 
 ```{r}
 tar_load(ex_cid)
+list_rbind(purrr::map(dat_list, extr_inf))
 ```
 
-I checked them one by one turns out 2 weren't actually CASRN, and 3 did have a CID after all.
-**The rest were either complex ingredients or just not found.**
+
+We've got 162 unique CASRN in the Ex dataset.
+
+Out of those, 24 couldn't be retrieved from PubChem. 
+
+
+I checked them one by one turns out 2 weren't actually CASRN.
+
+
+```{r}
+ex_cid |> 
+  filter(is.na(cid)) |> 
+  filter(!query %in% not_found_cid$casrn)
+```
+
+Of those 3 did have a CID after all.
+The remaining 22 were either complex ingredients or just not found.
 
 ```{r}
 not_found_cid
-# sum(duplicated(ex_cid$cid))
 ```
 
+
+Now, we can check if multiple casrn point to the same chemical on PubChem.
 Looks like we've got 25 duplicated CIDs in the Ex dataset too.
 
 ```{r}
 sum(duplicated(ex_cid$cid))
 ```
 
-Now let's grab the chemical info for the Ex dataset.
+I grabbed the chemical info for the Ex dataset.
 
-```{r eval=FALSE}
-ex_cid |> 
-  dplyr::bind_rows(to_add_ex) |>
-  dplyr::distinct(cid) |> 
-  tidyr::drop_na(cid) |>
-  pull(cid) |> 
-  tidyr::drop_na(cid) |>
-  webchem::get_cid(match = "first",
-                       verbose = TRUE)
-```
 
 ```{r}
 tar_load(ex_cid_chem_all)
@@ -350,29 +340,31 @@ ex_cid_chem_all |>
 
 ```
 
-Double checking the duplicates
+Double checking the duplicate, an NA.
 
 ```{r}
-sum(duplicated(ex_cid_chem_all$CID))
+sum(duplicated(ex_cid_chem_all$CID)) + sum(is.na(ex_cid_chem_all$CID)) +  sum(is.na(ex_cid_chem_all$CASRN))
 ```
+All good.
+
 
 ## More to it
 
 After discussion with Jiaqi, plan is:
 
 
-Master list_waterpipe chemical database (for the EX program and waterpipe fillers only)_2025.xlsx = A 
+Master list_waterpipe chemical database (for the EX program and waterpipe fillers only)_2025.xlsx = A  = main_dat
 
-New List EX-clean version.xlsx = B
+New List EX-clean version.xlsx = B = ex_dat
 
-solution = B -A = 33 
+solution = ex_dat - main_dat = 33 
 
-orange_plus = solution + orange (that were originally in A)
+orange_plus = solution + orange (that were originally in A - main_dat)
 
 We want:
-chem_to_eval = Orange_plus – A  (pretty much we check the one that are not in A)
+chem_to_eval = Orange_plus – main_dat  (pretty much we check the one that are not in main_dat)
+Actually after discussion, this will just be a double check.
 
-In the past I did B – (A + orange (is bigger)) = 24 but that is not what she wants.
 
 
 ### Orange
@@ -418,9 +410,11 @@ tar_load(to_add_orange)
 
 sum(duplicated(orange_cid_all$cid))
 ```
+
 Yes, there is a duplicate.
 
 Let's see which one.
+
 ```{r}
 
 dup <- orange_cid_all$cid[duplicated(orange_cid_all$cid)]
@@ -503,23 +497,15 @@ First we check the chemicals that are in orange_plus but not in ex_cid_chem_all.
 ```{r}
 tar_load(ex_cid_chem_all) 
 tar_load(orange_plus)
+tar_load(main_chem_all)
 
 
 orange_plus |> 
-  filter(!InChIKey %in% ex_cid_chem_all$InChIKey)
+  filter(!InChIKey %in% main_chem_all$InChIKey)
 ```
 
-<br>
 
 
-Just in case, we check the chemicals that are in ex_cid_chem_all. but not in orange_plus.
-
-
-
-```{r}
-ex_cid_chem_all |> 
-  filter(!InChIKey %in% orange_plus$InChIKey)
-```
 
 
 
